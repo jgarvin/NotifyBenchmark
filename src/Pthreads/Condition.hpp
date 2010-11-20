@@ -26,9 +26,7 @@ public:
 
     void wait()
     {
-        std::cout << "Lock the mutex" << std::endl;
         Mutex::Lock l(mutex_);
-        std::cout << "Now start waiting." << std::endl;
         pthread_cond_wait(&condition_, &mutex_.mutex_);
     }
 

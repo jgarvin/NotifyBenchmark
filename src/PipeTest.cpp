@@ -11,8 +11,6 @@ struct NoOp
     static void action(int) {}
 };
 
-#include <iostream>
-
 template<class RealCallback>
 struct WaitForMutex
 {

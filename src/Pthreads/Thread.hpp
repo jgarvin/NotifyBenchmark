@@ -1,7 +1,7 @@
 #pragma once
 
 #include <boost/utility.hpp>
-#include <boost/call_traits.hpp>
+#include <boost/optional.hpp>
 
 #include <pthread.h>
 
@@ -26,13 +26,13 @@ template<class Callback>
 class Thread : boost::noncopyable
 {
 public:
-    Thread(MutexAttributes const& attrs = MutexAttributes(),
-            typename boost::call_traits
-            <typename Callback::Data>::param_type const& data
-            = typename Callback::Data())
-        : data_(data)
+    Thread(boost::optional<typename Callback::Data> data
+               = boost::none)
     {
-        pthread_create(&thread_, &attrs.attrs_, &dispatch<Callback>, &data_);
+        // FIXME: Need ThreadAttributes
+        typename Callback::Data* data_pointer = data ? &*data : NULL;
+
+        pthread_create(&thread_, NULL, &dispatch<Callback>, data_pointer);
     }
 
     ~Thread()
@@ -41,7 +41,6 @@ public:
     }
 
 private:
-    typename Callback::Data data_;
     pthread_t thread_;
 };
 

@@ -6,8 +6,6 @@
 
 #include "Mutex.hpp"
 
-#include <iostream>
-
 namespace Pthread
 {
 

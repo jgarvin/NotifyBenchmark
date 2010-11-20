@@ -1,7 +1,9 @@
 #include <utility>
 
+#include <boost/shared_ptr.hpp>
+
 #include "Pthreads/Thread.hpp"
-#include "Pthreads/Condition.hpp"
+#include "Pthreads/Mutex.hpp"
 
 struct NoOp
 {
@@ -9,14 +11,17 @@ struct NoOp
     static void action(int) {}
 };
 
+#include <iostream>
+
 template<class RealCallback>
-struct WaitForCondition
+struct WaitForMutex
 {
-    typedef std::pair<Pthread::Condition&, typename RealCallback::Data> Data;
-    static void action(Data& cond_data_pair)
+    typedef std::pair<Pthread::Mutex&, typename RealCallback::Data> Data;
+    static void action(Data& startup_pair)
     {
-        cond_data_pair.first.wait();
-        RealCallback::action(cond_data_pair.second);
+        { Pthread::Mutex::Lock l(startup_pair.first); }
+
+        RealCallback::action(startup_pair.second);
     }
 };
 
@@ -26,12 +31,16 @@ class PipeTest : boost::noncopyable
 public:
     PipeTest()
     {
-        Pthread::Condition start_condition;
+        Pthread::Mutex starting_gate;
 
-        typedef WaitForCondition<NoOp> DelayedNoOp;
+        typedef WaitForMutex<NoOp> DelayedNoOp;
 
-        Pthread::Thread< DelayedNoOp > threadA(DelayedNoOp::Data(start_condition, 0));
-        Pthread::Thread< DelayedNoOp > threadB(DelayedNoOp::Data(start_condition, 0));
+        boost::shared_ptr<Pthread::Mutex::Lock> l(new Pthread::Mutex::Lock(starting_gate));
+
+        Pthread::Thread< DelayedNoOp > threadA(DelayedNoOp::Data(starting_gate, 0));
+        Pthread::Thread< DelayedNoOp > threadB(DelayedNoOp::Data(starting_gate, 0));
+
+        l.reset();
     }
 
     void activate()
